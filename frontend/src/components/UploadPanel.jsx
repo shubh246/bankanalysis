@@ -22,7 +22,13 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
       setPassword('')
       onUploaded()
     } catch (e) {
-      setError(e.response?.data?.detail || 'Upload failed. Please check the file and try again.')
+      if (e.response?.data?.detail) {
+        setError(e.response.data.detail)
+      } else if (e.message === 'Network Error' || !e.response) {
+        setError('Network / Connection Error. If the live backend service was sleeping (Render Free Tier), please wait 30 seconds for it to wake up and try again.')
+      } else {
+        setError('Upload failed. Please check the file format and try again.')
+      }
     } finally {
       setBusy(false)
     }
