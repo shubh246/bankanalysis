@@ -16,7 +16,6 @@ services:
   - type: web
     name: bank-statement-frontend
     env: static
-    region: singapore
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
@@ -26,9 +25,10 @@ services:
         fromService:
           type: web
           name: bank-statement-backend
-          property: url
+          property: host
 
 databases:
   - name: bank-statement-db
     region: singapore
     plan: free
+
