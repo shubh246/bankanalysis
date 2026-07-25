@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 let rawBase = import.meta.env.VITE_API_URL
-let apiBase = 'http://127.0.0.1:8000/api'
+export let apiBase = 'http://127.0.0.1:8000/api'
 
 if (rawBase) {
   if (!rawBase.startsWith('http://') && !rawBase.startsWith('https://')) {

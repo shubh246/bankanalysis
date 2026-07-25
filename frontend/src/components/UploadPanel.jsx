@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { uploadStatement } from '../api'
+import { apiBase, uploadStatement } from '../api'
 
 export default function UploadPanel({ statements, onUploaded, onDelete }) {
   const [dragOver, setDragOver] = useState(false)
@@ -9,6 +9,9 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
   const [password, setPassword] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const inputRef = useRef(null)
+
+  const isCloudHosted = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+  const isLocalApiTarget = apiBase.includes('127.0.0.1') || apiBase.includes('localhost')
 
   const handleFile = async (file, pdfPassword = password) => {
     if (!file) return
@@ -47,6 +50,12 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
     <div className="panel">
       <h2>Upload Bank Statement (PDF / CSV)</h2>
       <p className="muted">Upload your PDF or CSV bank statement. Multi-page PDFs, table-less PDFs, and password-protected files are supported.</p>
+
+      {isCloudHosted && isLocalApiTarget && (
+        <div className="alert alert-error" style={{ marginBottom: '16px', background: '#fff3cd', color: '#856404', borderColor: '#ffeeba' }}>
+          ⚠️ <strong>Deployment Warning:</strong> Live site is configured to target <code>{apiBase}</code>. Please set the <code>VITE_API_URL</code> environment variable in your Vercel/Render frontend settings (pointing to your backend URL e.g. <code>https://bank-statement-backend-xxxx.onrender.com</code>) and redeploy.
+        </div>
+      )}
 
       <div
         className={`dropzone ${dragOver ? 'dropzone-active' : ''}`}
