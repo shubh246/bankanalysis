@@ -1,0 +1,28 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from . import models
+from .database import Base, engine
+from .routers import fundflow, statements, transactions, upload
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Bank Statement Analysis API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(upload.router, prefix="/api")
+app.include_router(statements.router, prefix="/api")
+app.include_router(transactions.router, prefix="/api")
+app.include_router(fundflow.router, prefix="/api")
+
+
+@app.get("/api/health")
+def health():
+    return {"status": "ok"}
