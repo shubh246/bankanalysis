@@ -25,18 +25,17 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
+        working-directory: backend
         run: |
           python -m venv antenv
           source antenv/bin/activate
-          pip install -r backend/requirements.txt
+          pip install -r requirements.txt
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: |
-            .
-            !antenv/
+          path: backend
 
   deploy:
     runs-on: ubuntu-latest
@@ -64,3 +63,4 @@ jobs:
         with:
           app-name: 'bank-statement-backend-shubh'
           slot-name: 'Production'
+          startup-command: 'gunicorn --bind=0.0.0.0 --timeout 600 -k uvicorn.workers.UvicornWorker app.main:app'
