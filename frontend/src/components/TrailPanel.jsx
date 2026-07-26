@@ -34,8 +34,21 @@ export default function TrailPanel({ statements }) {
     return p
   }
 
+  const hasAnyFilter = () =>
+    filters.amount !== '' ||
+    filters.counterparty.trim() !== '' ||
+    filters.direction !== '' ||
+    filters.statement_id !== '' ||
+    filters.date_from !== '' ||
+    filters.date_to !== ''
+
   const runSearch = async (e) => {
     e.preventDefault()
+    if (!hasAnyFilter()) {
+      setError('Enter at least one filter (amount, name, direction, statement, or date) before searching.')
+      setSearched(false)
+      return
+    }
     setBusy(true)
     setError(null)
     try {
