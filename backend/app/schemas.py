@@ -28,12 +28,13 @@ class StatementOut(BaseModel):
     account_name: Optional[str]
     uploaded_at: datetime
     transaction_count: int
+    status: str
+    error: Optional[str] = None
+    warnings: list[str] = []
 
 
 class UploadResult(BaseModel):
     statement: StatementOut
-    transactions: list[TransactionOut]
-    warnings: list[str] = []
 
 
 class FundFlowNode(BaseModel):

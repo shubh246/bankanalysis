@@ -27,6 +27,8 @@ export const uploadStatement = (file, password = '') => {
 
 export const listStatements = () => api.get('/statements')
 
+export const getStatement = (id) => api.get(`/statements/${id}`)
+
 export const deleteStatement = (id) => api.delete(`/statements/${id}`)
 
 export const searchTransactions = (params) => api.get('/transactions', { params })

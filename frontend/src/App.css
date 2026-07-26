@@ -213,6 +213,42 @@
   min-width: auto;
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28px;
+}
+
+.section-header h3 {
+  margin-top: 0;
+}
+
+.btn-export {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #16a34a;
+  background: transparent;
+  color: #4ade80;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.btn-export:hover {
+  background: rgba(22, 163, 74, 0.12);
+}
+
+.table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.table th.sortable:hover {
+  color: #e2e8f0;
+}
+
 .node-title {
   font-weight: 600;
   margin-bottom: 2px;

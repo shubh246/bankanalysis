@@ -1,6 +1,17 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import * as XLSX from 'xlsx'
 import { searchTransactions, getFundFlow } from '../api'
 import FundFlowGraph from './FundFlowGraph'
+
+const COLUMNS = [
+  { key: 'date', label: 'Date' },
+  { key: 'counterparty', label: 'Name' },
+  { key: 'channel', label: 'Channel' },
+  { key: 'description', label: 'Description' },
+  { key: 'debit', label: 'Debit' },
+  { key: 'credit', label: 'Credit' },
+  { key: 'balance', label: 'Balance' },
+]
 
 const fmt = (n) => (n == null ? '-' : new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(n))
 
@@ -19,6 +30,51 @@ export default function TrailPanel({ statements }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [searched, setSearched] = useState(false)
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
+
+  const sortedTransactions = useMemo(() => {
+    if (!transactions) return transactions
+    if (!sortConfig.key) return transactions
+    const { key, direction } = sortConfig
+    const dir = direction === 'asc' ? 1 : -1
+    return [...transactions].sort((a, b) => {
+      let va = a[key]
+      let vb = b[key]
+      if (va == null && vb == null) return 0
+      if (va == null) return 1
+      if (vb == null) return -1
+      if (typeof va === 'string') va = va.toLowerCase()
+      if (typeof vb === 'string') vb = vb.toLowerCase()
+      if (va < vb) return -1 * dir
+      if (va > vb) return 1 * dir
+      return 0
+    })
+  }, [transactions, sortConfig])
+
+  const handleSort = (key) => {
+    setSortConfig((prev) =>
+      prev.key === key
+        ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
+        : { key, direction: 'asc' }
+    )
+  }
+
+  const exportToExcel = () => {
+    if (!sortedTransactions || sortedTransactions.length === 0) return
+    const data = sortedTransactions.map((t) => ({
+      Date: t.date ?? '',
+      Name: t.counterparty ?? '',
+      Channel: t.channel ?? '',
+      Description: t.description ?? '',
+      Debit: t.debit ?? '',
+      Credit: t.credit ?? '',
+      Balance: t.balance ?? '',
+    }))
+    const ws = XLSX.utils.json_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Transactions')
+    XLSX.writeFile(wb, `transactions_${new Date().toISOString().slice(0, 10)}.xlsx`)
+  }
 
   const update = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }))
 
@@ -142,23 +198,33 @@ export default function TrailPanel({ statements }) {
 
       {searched && (
         <>
-          <h3>Matching Transactions ({transactions?.length ?? 0})</h3>
+          <div className="section-header">
+            <h3>Matching Transactions ({transactions?.length ?? 0})</h3>
+            {transactions && transactions.length > 0 && (
+              <button type="button" className="btn-export" onClick={exportToExcel}>
+                Export to Excel
+              </button>
+            )}
+          </div>
           {transactions && transactions.length > 0 ? (
             <div className="table-scroll">
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Name</th>
-                    <th>Channel</th>
-                    <th>Description</th>
-                    <th>Debit</th>
-                    <th>Credit</th>
-                    <th>Balance</th>
+                    {COLUMNS.map((col) => (
+                      <th
+                        key={col.key}
+                        className="sortable"
+                        onClick={() => handleSort(col.key)}
+                      >
+                        {col.label}
+                        {sortConfig.key === col.key ? (sortConfig.direction === 'asc' ? ' ▲' : ' ▼') : ''}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.map((t) => (
+                  {sortedTransactions.map((t) => (
                     <tr key={t.id}>
                       <td>{t.date ?? '-'}</td>
                       <td>{t.counterparty}</td>

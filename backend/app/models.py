@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import (
+    JSON,
     Column,
     Date,
     DateTime,
@@ -22,6 +23,9 @@ class Statement(Base):
     account_name = Column(String, nullable=True)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
     transaction_count = Column(Integer, default=0)
+    status = Column(String, default="processing")  # processing | done | failed
+    error = Column(String, nullable=True)
+    warnings = Column(JSON, default=list)
 
     transactions = relationship(
         "Transaction", back_populates="statement", cascade="all, delete-orphan"

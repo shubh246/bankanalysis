@@ -1,5 +1,7 @@
-import { useRef, useState } from 'react'
-import { apiBase, uploadStatement } from '../api'
+import { useEffect, useRef, useState } from 'react'
+import { apiBase, getStatement, uploadStatement } from '../api'
+
+const POLL_INTERVAL_MS = 2000
 
 export default function UploadPanel({ statements, onUploaded, onDelete }) {
   const [dragOver, setDragOver] = useState(false)
@@ -9,9 +11,31 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
   const [password, setPassword] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const inputRef = useRef(null)
+  const pollTimerRef = useRef(null)
 
   const isCloudHosted = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
   const isLocalApiTarget = apiBase.includes('127.0.0.1') || apiBase.includes('localhost')
+
+  useEffect(() => () => clearTimeout(pollTimerRef.current), [])
+
+  const pollStatement = (id) => {
+    clearTimeout(pollTimerRef.current)
+    pollTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await getStatement(id)
+        const statement = res.data
+        setResult({ statement })
+        if (statement.status === 'processing') {
+          pollStatement(id)
+        } else {
+          setBusy(false)
+          onUploaded()
+        }
+      } catch {
+        setBusy(false)
+      }
+    }, POLL_INTERVAL_MS)
+  }
 
   const handleFile = async (file, pdfPassword = password) => {
     if (!file) return
@@ -24,7 +48,13 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
       setResult(res.data)
       setPassword('')
       onUploaded()
+      if (res.data.statement.status === 'processing') {
+        pollStatement(res.data.statement.id)
+      } else {
+        setBusy(false)
+      }
     } catch (e) {
+      setBusy(false)
       if (e.response?.data?.detail) {
         setError(e.response.data.detail)
       } else if (e.message === 'Network Error' || !e.response) {
@@ -32,8 +62,6 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
       } else {
         setError('Upload failed. Please check the file format and try again.')
       }
-    } finally {
-      setBusy(false)
     }
   }
 
@@ -48,8 +76,8 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
 
   return (
     <div className="panel">
-      <h2>Upload Bank Statement (PDF / CSV)</h2>
-      <p className="muted">Upload your PDF or CSV bank statement. Multi-page PDFs, table-less PDFs, and password-protected files are supported.</p>
+      <h2>Upload Bank Statement (PDF / CSV / Excel)</h2>
+      <p className="muted">Upload your PDF, CSV, or Excel (.xlsx/.xls) bank statement. Multi-page PDFs, table-less PDFs, and password-protected files are supported.</p>
 
       {isCloudHosted && isLocalApiTarget && (
         <div className="alert alert-error" style={{ marginBottom: '16px', background: '#fff3cd', color: '#856404', borderColor: '#ffeeba' }}>
@@ -67,14 +95,14 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
         <input
           ref={inputRef}
           type="file"
-          accept=".pdf,.csv"
+          accept=".pdf,.csv,.xlsx,.xls"
           hidden
           onChange={(e) => handleFile(e.target.files?.[0])}
         />
         {busy ? (
-          <p>Parsing PDF statement...</p>
+          <p>{result?.statement?.status === 'processing' ? 'Processing statement... this can take a while for large PDFs.' : 'Uploading...'}</p>
         ) : (
-          <p>Drag &amp; drop a <strong>PDF</strong> or <strong>CSV</strong> here, or click to browse</p>
+          <p>Drag &amp; drop a <strong>PDF</strong>, <strong>CSV</strong>, or <strong>Excel</strong> file here, or click to browse</p>
         )}
       </div>
 
@@ -100,13 +128,25 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
 
       {error && <div className="alert alert-error" style={{ marginTop: '12px' }}>{error}</div>}
 
-      {result && (
+      {result?.statement?.status === 'processing' && (
+        <div className="alert" style={{ marginTop: '12px' }}>
+          Processing <strong>{result.statement.filename}</strong>... this page will update automatically.
+        </div>
+      )}
+
+      {result?.statement?.status === 'failed' && (
+        <div className="alert alert-error" style={{ marginTop: '12px' }}>
+          Failed to process <strong>{result.statement.filename}</strong>: {result.statement.error}
+        </div>
+      )}
+
+      {result?.statement?.status === 'done' && (
         <div className="alert alert-success" style={{ marginTop: '12px' }}>
-          Parsed <strong>{result.transactions.length}</strong> transactions from{' '}
+          Parsed <strong>{result.statement.transaction_count}</strong> transactions from{' '}
           <strong>{result.statement.filename}</strong>.
-          {result.warnings.length > 0 && (
+          {result.statement.warnings?.length > 0 && (
             <ul>
-              {result.warnings.map((w, i) => <li key={i}>{w}</li>)}
+              {result.statement.warnings.map((w, i) => <li key={i}>{w}</li>)}
             </ul>
           )}
         </div>
@@ -121,6 +161,7 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
             <tr>
               <th>File</th>
               <th>Uploaded</th>
+              <th>Status</th>
               <th>Transactions</th>
               <th></th>
             </tr>
@@ -130,6 +171,11 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
               <tr key={s.id}>
                 <td>{s.filename}</td>
                 <td>{new Date(s.uploaded_at).toLocaleString()}</td>
+                <td>
+                  {s.status === 'processing' && <span className="status-badge status-processing">Processing</span>}
+                  {s.status === 'done' && <span className="status-badge status-done">Done</span>}
+                  {s.status === 'failed' && <span className="status-badge status-failed" title={s.error}>Failed</span>}
+                </td>
                 <td>{s.transaction_count}</td>
                 <td>
                   <button className="btn-link btn-danger" onClick={() => onDelete(s.id)}>
@@ -144,4 +190,3 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
     </div>
   )
 }
-

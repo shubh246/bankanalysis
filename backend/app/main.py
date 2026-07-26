@@ -2,10 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import models
-from .database import Base, engine
+from .database import Base, engine, run_migrations
 from .routers import fundflow, statements, transactions, upload
 
 Base.metadata.create_all(bind=engine)
+run_migrations()
 
 app = FastAPI(title="Bank Statement Analysis API")
 

@@ -238,6 +238,24 @@ def parse_csv(content: bytes) -> list[dict]:
     raise ValueError("Could not parse CSV file. Please check file formatting.")
 
 
+def parse_excel(content: bytes) -> list[dict]:
+    try:
+        sheets = pd.read_excel(io.BytesIO(content), sheet_name=None)
+    except Exception as e:
+        raise ValueError(f"Could not parse Excel file: {e}")
+
+    all_rows: list[dict] = []
+    for df in sheets.values():
+        try:
+            all_rows.extend(_normalize_dataframe(df))
+        except Exception:
+            continue
+
+    if not all_rows:
+        raise ValueError("Could not parse tabular transaction data from this Excel file.")
+    return all_rows
+
+
 def _pad_or_truncate_row(row: list[str], target_len: int) -> list[str]:
     if len(row) == target_len:
         return row
@@ -412,8 +430,10 @@ def parse_statement(filename: str, content: bytes, password: Optional[str] = Non
         rows = parse_csv(content)
     elif lower.endswith(".pdf"):
         rows = parse_pdf(content, password=password)
+    elif lower.endswith(".xlsx") or lower.endswith(".xls"):
+        rows = parse_excel(content)
     else:
-        raise ValueError("Unsupported file type. Please upload a .csv or .pdf file.")
+        raise ValueError("Unsupported file type. Please upload a .csv, .xlsx, .xls, or .pdf file.")
 
     if not rows:
         raise ValueError("No transactions could be parsed from this file.")
