@@ -40,9 +40,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    permissions:
-      id-token: write
-      contents: read
 
     steps:
       - name: Download artifact from build job
@@ -50,17 +47,11 @@ jobs:
         with:
           name: python-app
 
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F8392173EF9F49F89FF5293D90AFEB2B }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_8124E3D2D2AA43B9A90AC21BEADCFE13 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_349DF9D1DDE64CD3BAD45B79DE0D0727 }}
-
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'bank-statement-backend-shubh'
           slot-name: 'Production'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           startup-command: 'gunicorn --bind=0.0.0.0 --timeout 600 -k uvicorn.workers.UvicornWorker app.main:app'
