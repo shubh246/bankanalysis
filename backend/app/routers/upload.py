@@ -44,13 +44,20 @@ async def upload_statement(
     db.flush()
 
     for r in rows:
-        db.add(models.Transaction(statement_id=statement.id, **r))
+        r["statement_id"] = statement.id
+    db.bulk_insert_mappings(models.Transaction, rows)
 
     db.commit()
     db.refresh(statement)
 
+    transactions = (
+        db.query(models.Transaction)
+        .filter(models.Transaction.statement_id == statement.id)
+        .all()
+    )
+
     return schemas.UploadResult(
         statement=schemas.StatementOut.model_validate(statement),
-        transactions=[schemas.TransactionOut.model_validate(t) for t in statement.transactions],
+        transactions=[schemas.TransactionOut.model_validate(t) for t in transactions],
         warnings=warnings,
     )
