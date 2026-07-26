@@ -10,7 +10,7 @@ export default function TrailPanel({ statements }) {
     amount_tolerance: '0',
     counterparty: '',
     direction: '',
-    statement_id: '',
+    statement_ids: [],
     date_from: '',
     date_to: '',
   })
@@ -22,13 +22,26 @@ export default function TrailPanel({ statements }) {
 
   const update = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }))
 
+  const toggleStatement = (id) => {
+    setFilters((f) => {
+      const idStr = String(id)
+      const has = f.statement_ids.includes(idStr)
+      return {
+        ...f,
+        statement_ids: has
+          ? f.statement_ids.filter((x) => x !== idStr)
+          : [...f.statement_ids, idStr],
+      }
+    })
+  }
+
   const buildParams = () => {
     const p = {}
     if (filters.amount !== '') p.amount = Number(filters.amount)
     if (filters.amount_tolerance !== '') p.amount_tolerance = Number(filters.amount_tolerance)
     if (filters.counterparty) p.counterparty = filters.counterparty
     if (filters.direction) p.direction = filters.direction
-    if (filters.statement_id) p.statement_id = Number(filters.statement_id)
+    if (filters.statement_ids.length > 0) p.statement_ids = filters.statement_ids.join(',')
     if (filters.date_from) p.date_from = filters.date_from
     if (filters.date_to) p.date_to = filters.date_to
     return p
@@ -38,7 +51,7 @@ export default function TrailPanel({ statements }) {
     filters.amount !== '' ||
     filters.counterparty.trim() !== '' ||
     filters.direction !== '' ||
-    filters.statement_id !== '' ||
+    filters.statement_ids.length > 0 ||
     filters.date_from !== '' ||
     filters.date_to !== ''
 
@@ -96,14 +109,21 @@ export default function TrailPanel({ statements }) {
             <option value="debit">Debit (money out)</option>
           </select>
         </div>
-        <div className="field">
-          <label>Statement</label>
-          <select value={filters.statement_id} onChange={update('statement_id')}>
-            <option value="">All</option>
+        <div className="field field-statements">
+          <label>Statements ({filters.statement_ids.length === 0 ? 'all' : filters.statement_ids.length} selected)</label>
+          <div className="checkbox-group">
+            {statements.length === 0 && <span className="muted">No statements uploaded yet.</span>}
             {statements.map((s) => (
-              <option key={s.id} value={s.id}>{s.filename}</option>
+              <label key={s.id} className="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={filters.statement_ids.includes(String(s.id))}
+                  onChange={() => toggleStatement(s.id)}
+                />
+                {s.filename}
+              </label>
             ))}
-          </select>
+          </div>
         </div>
         <div className="field">
           <label>From date</label>

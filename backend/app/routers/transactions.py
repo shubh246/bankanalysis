@@ -18,7 +18,7 @@ def search_transactions(
     amount_max: Optional[float] = Query(None),
     counterparty: Optional[str] = Query(None, description="Substring match on name"),
     direction: Optional[str] = Query(None, pattern="^(debit|credit)$"),
-    statement_id: Optional[int] = Query(None),
+    statement_ids: Optional[str] = Query(None, description="Comma-separated statement ids to include"),
     date_from: Optional[date] = Query(None),
     date_to: Optional[date] = Query(None),
     limit: int = Query(500, le=5000),
@@ -37,8 +37,10 @@ def search_transactions(
         q = q.filter(models.Transaction.counterparty.ilike(f"%{counterparty}%"))
     if direction:
         q = q.filter(models.Transaction.direction == direction)
-    if statement_id is not None:
-        q = q.filter(models.Transaction.statement_id == statement_id)
+    if statement_ids:
+        ids = [int(x) for x in statement_ids.split(",") if x.strip()]
+        if ids:
+            q = q.filter(models.Transaction.statement_id.in_(ids))
     if date_from is not None:
         q = q.filter(models.Transaction.date >= date_from)
     if date_to is not None:

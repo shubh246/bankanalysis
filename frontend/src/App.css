@@ -182,6 +182,37 @@
   cursor: not-allowed;
 }
 
+.field-statements {
+  min-width: 220px;
+  max-width: 320px;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 110px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  background: #0f172a;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: inherit;
+  cursor: pointer;
+}
+
+.checkbox-item input {
+  min-width: auto;
+}
+
 .node-title {
   font-weight: 600;
   margin-bottom: 2px;

@@ -20,7 +20,7 @@ def fund_flow(
     amount_min: Optional[float] = Query(None),
     amount_max: Optional[float] = Query(None),
     counterparty: Optional[str] = Query(None),
-    statement_id: Optional[int] = Query(None),
+    statement_ids: Optional[str] = Query(None, description="Comma-separated statement ids to include"),
     date_from: Optional[date] = Query(None),
     date_to: Optional[date] = Query(None),
     db: Session = Depends(get_db),
@@ -36,8 +36,10 @@ def fund_flow(
         q = q.filter(models.Transaction.amount <= amount_max)
     if counterparty:
         q = q.filter(models.Transaction.counterparty.ilike(f"%{counterparty}%"))
-    if statement_id is not None:
-        q = q.filter(models.Transaction.statement_id == statement_id)
+    if statement_ids:
+        ids = [int(x) for x in statement_ids.split(",") if x.strip()]
+        if ids:
+            q = q.filter(models.Transaction.statement_id.in_(ids))
     if date_from is not None:
         q = q.filter(models.Transaction.date >= date_from)
     if date_to is not None:
