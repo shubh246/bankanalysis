@@ -15,6 +15,8 @@ const COLUMNS = [
 
 const fmt = (n) => (n == null ? '-' : new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(n))
 
+const PAGE_SIZE = 50
+
 export default function TrailPanel({ statements }) {
   const [filters, setFilters] = useState({
     amount: '',
@@ -31,6 +33,7 @@ export default function TrailPanel({ statements }) {
   const [error, setError] = useState(null)
   const [searched, setSearched] = useState(false)
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
+  const [page, setPage] = useState(1)
 
   const sortedTransactions = useMemo(() => {
     if (!transactions) return transactions
@@ -51,7 +54,13 @@ export default function TrailPanel({ statements }) {
     })
   }, [transactions, sortConfig])
 
+  const pageCount = sortedTransactions ? Math.max(1, Math.ceil(sortedTransactions.length / PAGE_SIZE)) : 1
+  const pagedTransactions = sortedTransactions
+    ? sortedTransactions.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    : sortedTransactions
+
   const handleSort = (key) => {
+    setPage(1)
     setSortConfig((prev) =>
       prev.key === key
         ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
@@ -129,6 +138,7 @@ export default function TrailPanel({ statements }) {
       setTransactions(txRes.data)
       setFlow(flowRes.data)
       setSearched(true)
+      setPage(1)
     } catch (e) {
       setError(e.response?.data?.detail || 'Search failed.')
     } finally {
@@ -224,7 +234,7 @@ export default function TrailPanel({ statements }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedTransactions.map((t) => (
+                  {pagedTransactions.map((t) => (
                     <tr key={t.id}>
                       <td>{t.date ?? '-'}</td>
                       <td>{t.counterparty}</td>
@@ -240,6 +250,18 @@ export default function TrailPanel({ statements }) {
             </div>
           ) : (
             <p className="muted">No transactions matched.</p>
+          )}
+
+          {transactions && transactions.length > PAGE_SIZE && (
+            <div className="pagination">
+              <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
+                Previous
+              </button>
+              <span className="muted">Page {page} of {pageCount}</span>
+              <button type="button" onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={page >= pageCount}>
+                Next
+              </button>
+            </div>
           )}
 
           <h3>Fund Flow</h3>
