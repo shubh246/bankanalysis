@@ -10,9 +10,43 @@ if (rawBase) {
   apiBase = `${rawBase.replace(/\/$/, '')}/api`
 }
 
+const TOKEN_KEY = 'auth_token'
+
+export const getToken = () => localStorage.getItem(TOKEN_KEY)
+export const setToken = (token) => localStorage.setItem(TOKEN_KEY, token)
+export const clearToken = () => localStorage.removeItem(TOKEN_KEY)
+
+let onUnauthorized = () => {}
+export const setUnauthorizedHandler = (fn) => { onUnauthorized = fn }
+
 const api = axios.create({
   baseURL: apiBase,
 })
+
+api.interceptors.request.use((config) => {
+  const token = getToken()
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      clearToken()
+      onUnauthorized()
+    }
+    return Promise.reject(err)
+  }
+)
+
+export const login = (username, password) =>
+  axios.post(`${apiBase}/auth/login`, { username, password })
+
+export const register = (username, password) =>
+  axios.post(`${apiBase}/auth/register`, { username, password })
 
 export const uploadStatement = (file, password = '') => {
   const form = new FormData()

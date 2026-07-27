@@ -15,10 +15,22 @@ from sqlalchemy.orm import relationship
 from .database import Base
 
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, nullable=False, index=True)
+    password_hash = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    statements = relationship("Statement", back_populates="owner")
+
+
 class Statement(Base):
     __tablename__ = "statements"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     filename = Column(String, nullable=False)
     account_name = Column(String, nullable=True)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
@@ -30,6 +42,7 @@ class Statement(Base):
     transactions = relationship(
         "Transaction", back_populates="statement", cascade="all, delete-orphan"
     )
+    owner = relationship("User", back_populates="statements")
 
 
 class Transaction(Base):

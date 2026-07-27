@@ -2,11 +2,17 @@ import { useEffect, useState, useCallback } from 'react'
 import './App.css'
 import UploadPanel from './components/UploadPanel'
 import TrailPanel from './components/TrailPanel'
-import { listStatements, deleteStatement } from './api'
+import Login from './components/Login'
+import { listStatements, deleteStatement, getToken, clearToken, setUnauthorizedHandler } from './api'
 
 function App() {
   const [tab, setTab] = useState('upload')
   const [statements, setStatements] = useState([])
+  const [authed, setAuthed] = useState(!!getToken())
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => setAuthed(false))
+  }, [])
 
   const refreshStatements = useCallback(async () => {
     const res = await listStatements()
@@ -14,13 +20,22 @@ function App() {
   }, [])
 
   useEffect(() => {
-    refreshStatements()
-  }, [refreshStatements])
+    if (authed) refreshStatements()
+  }, [authed, refreshStatements])
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this statement and all its transactions?')) return
     await deleteStatement(id)
     refreshStatements()
+  }
+
+  const handleLogout = () => {
+    clearToken()
+    setAuthed(false)
+  }
+
+  if (!authed) {
+    return <Login onLoggedIn={() => setAuthed(true)} />
   }
 
   return (
@@ -34,6 +49,7 @@ function App() {
           <button className={tab === 'trail' ? 'active' : ''} onClick={() => setTab('trail')}>
             Trail &amp; Fund Flow
           </button>
+          <button onClick={handleLogout}>Log out</button>
         </nav>
       </header>
 

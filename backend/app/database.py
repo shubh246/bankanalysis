@@ -50,4 +50,6 @@ def run_migrations():
         if added_status:
             # rows that existed before this migration were already fully processed synchronously
             conn.execute(text("UPDATE statements SET status = 'done'"))
+        if "user_id" not in existing_cols:
+            conn.execute(text("ALTER TABLE statements ADD COLUMN user_id INTEGER"))
 

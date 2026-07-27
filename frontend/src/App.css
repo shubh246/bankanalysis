@@ -5,6 +5,66 @@
   text-align: left;
 }
 
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background: rgba(148, 163, 184, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-card h2 {
+  margin: 0;
+}
+
+.login-card .field input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: inherit;
+  box-sizing: border-box;
+}
+
+.login-card button[type="submit"] {
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  background: #1d4ed8;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.login-card button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-switch {
+  text-align: center;
+  margin-top: 4px;
+}
+
+.login-switch .btn-link {
+  color: #60a5fa;
+  text-decoration: underline;
+  font-size: inherit;
+}
+
 .app-header {
   display: flex;
   align-items: center;
@@ -247,6 +307,52 @@
 
 .table th.sortable:hover {
   color: #e2e8f0;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.pagination button {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-processing {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+}
+
+.status-done {
+  background: rgba(22, 163, 74, 0.15);
+  color: #4ade80;
+}
+
+.status-failed {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+  cursor: help;
 }
 
 .node-title {

@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
+from ..auth import CurrentUser, get_current_user
 from ..database import get_db
 
 router = APIRouter(tags=["fundflow"])
@@ -24,8 +25,13 @@ def fund_flow(
     date_from: Optional[date] = Query(None),
     date_to: Optional[date] = Query(None),
     db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    q = db.query(models.Transaction)
+    q = (
+        db.query(models.Transaction)
+        .join(models.Statement, models.Transaction.statement_id == models.Statement.id)
+        .filter(models.Statement.user_id == current_user.id)
+    )
 
     if amount is not None:
         lo, hi = amount - amount_tolerance, amount + amount_tolerance

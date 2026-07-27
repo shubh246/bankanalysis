@@ -4,6 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPExcepti
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
+from ..auth import CurrentUser, get_current_user
 from ..database import SessionLocal, get_db
 from ..parser import parse_statement
 
@@ -58,6 +59,7 @@ async def upload_statement(
     file: UploadFile = File(...),
     password: Optional[str] = Form(None),
     db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided.")
@@ -67,7 +69,8 @@ async def upload_statement(
         raise HTTPException(status_code=400, detail="File too large (max 20MB).")
 
     statement = models.Statement(
-        filename=file.filename, transaction_count=0, status="processing", warnings=[]
+        user_id=current_user.id, filename=file.filename, transaction_count=0,
+        status="processing", warnings=[],
     )
     db.add(statement)
     db.commit()
