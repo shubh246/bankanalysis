@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { apiBase, getStatement, uploadStatement } from '../api'
 
 const POLL_INTERVAL_MS = 2000
+const MAX_POLL_FAILURES = 15
 
 export default function UploadPanel({ statements, onUploaded, onDelete }) {
   const [dragOver, setDragOver] = useState(false)
@@ -12,6 +13,7 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
   const [selectedFile, setSelectedFile] = useState(null)
   const inputRef = useRef(null)
   const pollTimerRef = useRef(null)
+  const pollFailuresRef = useRef(0)
 
   const isCloudHosted = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
   const isLocalApiTarget = apiBase.includes('127.0.0.1') || apiBase.includes('localhost')
@@ -24,6 +26,7 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
       try {
         const res = await getStatement(id)
         const statement = res.data
+        pollFailuresRef.current = 0
         setResult({ statement })
         if (statement.status === 'processing') {
           pollStatement(id)
@@ -32,7 +35,13 @@ export default function UploadPanel({ statements, onUploaded, onDelete }) {
           onUploaded()
         }
       } catch {
-        setBusy(false)
+        pollFailuresRef.current += 1
+        if (pollFailuresRef.current >= MAX_POLL_FAILURES) {
+          setBusy(false)
+          setError('Lost connection while checking upload status. The file may still be processing on the server — refresh the page in a minute to check.')
+        } else {
+          pollStatement(id)
+        }
       }
     }, POLL_INTERVAL_MS)
   }
