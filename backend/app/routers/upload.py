@@ -1,3 +1,4 @@
+import hashlib
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
@@ -68,9 +69,28 @@ async def upload_statement(
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="File too large (max 20MB).")
 
+    content_hash = hashlib.sha256(content).hexdigest()
+    duplicate = (
+        db.query(models.Statement)
+        .filter(
+            models.Statement.user_id == current_user.id,
+            models.Statement.content_hash == content_hash,
+            models.Statement.status.in_(["processing", "done"]),
+        )
+        .first()
+    )
+    if duplicate:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"This exact file was already uploaded as \"{duplicate.filename}\" "
+                f"on {duplicate.uploaded_at.strftime('%Y-%m-%d %H:%M')}."
+            ),
+        )
+
     statement = models.Statement(
         user_id=current_user.id, filename=file.filename, transaction_count=0,
-        status="processing", warnings=[],
+        status="processing", warnings=[], content_hash=content_hash,
     )
     db.add(statement)
     db.commit()

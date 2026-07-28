@@ -38,6 +38,7 @@ class Statement(Base):
     status = Column(String, default="processing")  # processing | done | failed
     error = Column(String, nullable=True)
     warnings = Column(JSON, default=list)
+    content_hash = Column(String, nullable=True, index=True)
 
     transactions = relationship(
         "Transaction", back_populates="statement", cascade="all, delete-orphan"

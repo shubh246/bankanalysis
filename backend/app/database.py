@@ -52,4 +52,6 @@ def run_migrations():
             conn.execute(text("UPDATE statements SET status = 'done'"))
         if "user_id" not in existing_cols:
             conn.execute(text("ALTER TABLE statements ADD COLUMN user_id INTEGER"))
+        if "content_hash" not in existing_cols:
+            conn.execute(text("ALTER TABLE statements ADD COLUMN content_hash VARCHAR"))
 
