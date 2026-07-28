@@ -15,6 +15,12 @@ const COLUMNS = [
 
 const fmt = (n) => (n == null ? '-' : new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(n))
 
+const fmtDate = (isoDate) => {
+  if (!isoDate) return '-'
+  const [y, m, d] = isoDate.split('-')
+  return `${d}-${m}-${y}`
+}
+
 const PAGE_SIZE = 50
 
 export default function TrailPanel({ statements }) {
@@ -71,7 +77,7 @@ export default function TrailPanel({ statements }) {
   const exportToExcel = () => {
     if (!sortedTransactions || sortedTransactions.length === 0) return
     const data = sortedTransactions.map((t) => ({
-      Date: t.date ?? '',
+      Date: fmtDate(t.date),
       Name: t.counterparty ?? '',
       Channel: t.channel ?? '',
       Description: t.description ?? '',
@@ -238,7 +244,7 @@ export default function TrailPanel({ statements }) {
                 <tbody>
                   {pagedTransactions.map((t) => (
                     <tr key={t.id}>
-                      <td>{t.date ?? '-'}</td>
+                      <td>{fmtDate(t.date)}</td>
                       <td>{t.counterparty}</td>
                       <td>{t.channel}</td>
                       <td className="desc-cell">{t.description}</td>
