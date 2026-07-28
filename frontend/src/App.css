@@ -309,6 +309,17 @@
   color: #e2e8f0;
 }
 
+.sort-arrow {
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 0.75em;
+  color: #475569;
+}
+
+.sort-arrow.active {
+  color: #60a5fa;
+}
+
 .pagination {
   display: flex;
   align-items: center;

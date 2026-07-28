@@ -228,7 +228,9 @@ export default function TrailPanel({ statements }) {
                         onClick={() => handleSort(col.key)}
                       >
                         {col.label}
-                        {sortConfig.key === col.key ? (sortConfig.direction === 'asc' ? ' ▲' : ' ▼') : ''}
+                        <span className={`sort-arrow${sortConfig.key === col.key ? ' active' : ''}`}>
+                          {sortConfig.key === col.key ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '⇅'}
+                        </span>
                       </th>
                     ))}
                   </tr>
